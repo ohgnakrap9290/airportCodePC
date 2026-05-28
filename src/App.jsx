@@ -132,7 +132,7 @@ function App() {
       ...item,
       roundKey: `${item.category}-${item.code}-${Math.random()}`,
       choices: roundConfig.method === "choice"
-        ? createChoices(item, roundConfig.direction.answerKey, pool)
+        ? createChoices(item, roundConfig.answerKey, pool)
         : [],
     }));
   }
