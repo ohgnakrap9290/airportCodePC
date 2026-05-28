@@ -1,0 +1,18 @@
+{
+  "name": "공항 코드 퀴즈",
+  "short_name": "공항퀴즈",
+  "description": "공항 코드와 지역명을 연습하는 퀴즈 앱",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f5f7fb",
+  "theme_color": "#f5f7fb",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
