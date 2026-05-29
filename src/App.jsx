@@ -60,6 +60,10 @@ function createChoices(question, answerKey, pool, choiceCount) {
   return shuffle([correctValue, ...shuffle(uniqueWrongValues).slice(0, choiceCount - 1)]);
 }
 
+function findAirportByAnswerValue(value, answerKey) {
+  return allAirports.find((item) => item[answerKey] === value);
+}
+
 function clampQuestionCount(value, max) {
   const numericValue = Number(value);
   if (!Number.isFinite(numericValue)) {
@@ -236,7 +240,14 @@ function App() {
       setWrongAnswers((items) => [...items, questionData]);
     }
 
-    setFeedback({ correct, correctAnswer });
+    setFeedback({
+      correct,
+      correctAnswer,
+      selectedAnswer: answerValue,
+      selectedAirport: quiz.method === "choice"
+        ? findAirportByAnswerValue(answerValue, quiz.answerKey)
+        : null,
+    });
   }
 
   function submitTextAnswer(event) {
@@ -576,6 +587,11 @@ function App() {
             <div className={feedback.correct ? "feedback correct" : "feedback wrong"} role="status">
               <strong>{feedback.correct ? "정답입니다" : "오답입니다"}</strong>
               {!feedback.correct && <span>정답: {feedback.correctAnswer}</span>}
+              {!feedback.correct && feedback.selectedAirport && (
+                <span>
+                  선택: {feedback.selectedAirport.code} / {feedback.selectedAirport.name}
+                </span>
+              )}
             </div>
           )}
 
