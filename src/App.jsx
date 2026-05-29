@@ -141,13 +141,11 @@ function App() {
   }
 
   function buildRoundQuestions(sourceItems, roundConfig) {
-    const pool = roundConfig.pool;
-
     return shuffle(sourceItems).map((item) => ({
       ...item,
       roundKey: `${item.category}-${item.code}-${Math.random()}`,
       choices: roundConfig.method === "choice"
-        ? createChoices(item, roundConfig.answerKey, pool, roundConfig.choiceCount)
+        ? createChoices(item, roundConfig.answerKey, allAirports, roundConfig.choiceCount)
         : [],
     }));
   }
