@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { allAirports, airportCategories } from "./data/airports.js";
 
 const CATEGORIES = airportCategories.map(({ category }) => category);
-const CHOICE_COUNT_OPTIONS = [4, 5, 6, 7, 8, 9, 10];
-
 const METHOD_OPTIONS = [
   { id: "choice", label: "객관식" },
   { id: "text", label: "주관식" },
@@ -69,6 +67,15 @@ function clampQuestionCount(value, max) {
   }
 
   return Math.min(Math.max(Math.round(numericValue), 1), Math.max(max, 1));
+}
+
+function clampChoiceCount(value) {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) {
+    return 7;
+  }
+
+  return Math.min(Math.max(Math.round(numericValue), 4), 10);
 }
 
 function App() {
@@ -333,19 +340,34 @@ function App() {
           <p className="eyebrow">3 / {totalSetupSteps}</p>
           <h2>보기 개수 선택</h2>
         </div>
-        <div className="choice-count-grid" role="group" aria-label="객관식 보기 개수">
-          {CHOICE_COUNT_OPTIONS.map((count) => (
-            <button
-              className={choiceCount === count ? "choice-count-button selected" : "choice-count-button"}
-              key={count}
-              type="button"
-              onClick={() => setChoiceCount(count)}
-            >
-              {count}개
+        <div className="count-control">
+          <div className="count-display">{choiceCount}</div>
+          <input
+            aria-label="보기 개수"
+            max="10"
+            min="4"
+            onChange={(event) => setChoiceCount(clampChoiceCount(event.target.value))}
+            type="range"
+            value={choiceCount}
+          />
+          <div className="stepper-row">
+            <button className="secondary-button compact-button" type="button" onClick={() => setChoiceCount((value) => clampChoiceCount(value - 1))}>
+              -1
             </button>
-          ))}
+            <input
+              aria-label="보기 개수 직접 입력"
+              inputMode="numeric"
+              max="10"
+              min="4"
+              onChange={(event) => setChoiceCount(clampChoiceCount(event.target.value))}
+              type="number"
+              value={choiceCount}
+            />
+            <button className="secondary-button compact-button" type="button" onClick={() => setChoiceCount((value) => clampChoiceCount(value + 1))}>
+              +1
+            </button>
+          </div>
         </div>
-        <p className="helper-text">객관식 보기 수는 4개부터 10개까지 설정할 수 있습니다. 기본값은 7개입니다.</p>
         <div className="setup-actions">
           <button className="secondary-button" type="button" onClick={() => setSetupStep(2)}>
             이전

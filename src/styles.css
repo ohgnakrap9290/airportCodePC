@@ -163,7 +163,6 @@ h2 {
 
 .category-grid,
 .option-grid,
-.choice-count-grid,
 .direction-list,
 .choice-list {
   display: grid;
@@ -230,26 +229,6 @@ h2 {
   font-size: 1.04rem;
   font-weight: 800;
   text-align: center;
-}
-
-.choice-count-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.choice-count-button {
-  min-height: 54px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: transparent;
-  color: var(--text);
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.choice-count-button.selected {
-  border-color: var(--primary);
-  background: var(--primary-soft);
-  color: var(--primary-strong);
 }
 
 .direction-card {
@@ -530,12 +509,7 @@ input[type="range"] {
   }
 
   .category-grid,
-  .option-grid,
-  .choice-count-grid {
+  .option-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .choice-count-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
