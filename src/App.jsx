@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { allAirports, airportCategories } from "./data/airports.js";
 
 const CATEGORIES = airportCategories.map(({ category }) => category);
+const CHOICE_COUNT_OPTIONS = [4, 5, 6, 7, 8, 9, 10];
 
 const METHOD_OPTIONS = [
   { id: "choice", label: "객관식" },
@@ -51,14 +52,14 @@ function getCategorySummary(selectedCategories) {
   return selectedCategories.join(", ");
 }
 
-function createChoices(question, answerKey, pool) {
+function createChoices(question, answerKey, pool, choiceCount) {
   const correctValue = question[answerKey];
   const wrongValues = pool
     .map((item) => item[answerKey])
     .filter((value) => value !== correctValue);
   const uniqueWrongValues = [...new Set(wrongValues)];
 
-  return shuffle([correctValue, ...shuffle(uniqueWrongValues).slice(0, 3)]);
+  return shuffle([correctValue, ...shuffle(uniqueWrongValues).slice(0, choiceCount - 1)]);
 }
 
 function clampQuestionCount(value, max) {
@@ -82,6 +83,7 @@ function App() {
   const [setupStep, setSetupStep] = useState(1);
   const [selectedCategories, setSelectedCategories] = useState(CATEGORIES);
   const [method, setMethod] = useState("choice");
+  const [choiceCount, setChoiceCount] = useState(7);
   const [direction, setDirection] = useState("code");
   const [questionCount, setQuestionCount] = useState(20);
   const [openHelp, setOpenHelp] = useState("");
@@ -101,6 +103,9 @@ function App() {
   const isRoundFinished = Boolean(quiz) && currentIndex >= quiz.questions.length;
   const progressCurrent = Math.min(currentIndex + 1, quiz?.questions.length ?? 0);
   const categorySummary = getCategorySummary(selectedCategories);
+  const directionStep = method === "choice" ? 4 : 3;
+  const countStep = method === "choice" ? 5 : 4;
+  const totalSetupSteps = method === "choice" ? 5 : 4;
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -135,7 +140,7 @@ function App() {
       ...item,
       roundKey: `${item.category}-${item.code}-${Math.random()}`,
       choices: roundConfig.method === "choice"
-        ? createChoices(item, roundConfig.answerKey, pool)
+        ? createChoices(item, roundConfig.answerKey, pool, roundConfig.choiceCount)
         : [],
     }));
   }
@@ -147,6 +152,7 @@ function App() {
       categorySummary,
       method,
       methodLabel: selectedMethod.label,
+      choiceCount,
       direction,
       directionLabel: selectedDirection.label,
       promptKey: selectedDirection.promptKey,
@@ -241,127 +247,159 @@ function App() {
     resetAnswerState();
   }
 
-  function renderSetupStep() {
-    if (setupStep === 1) {
-      return (
-        <section className="card setup-card">
-          <div className="step-header">
-            <p className="eyebrow">1 / 4</p>
-            <h2>카테고리 선택</h2>
-          </div>
-          <div className="utility-row">
-            <button className="secondary-button compact-button" type="button" onClick={() => setSelectedCategories(CATEGORIES)}>
-              전체 선택
-            </button>
-            <button className="secondary-button compact-button" type="button" onClick={() => setSelectedCategories([])}>
-              전체 해제
-            </button>
-          </div>
-          <div className="category-grid">
-            {CATEGORIES.map((category) => {
-              const selected = selectedCategories.includes(category);
-              const count = airportCategories.find((group) => group.category === category)?.items.length ?? 0;
-
-              return (
-                <button
-                  className={selected ? "category-card selected" : "category-card"}
-                  key={category}
-                  type="button"
-                  onClick={() => toggleCategory(category)}
-                  aria-pressed={selected}
-                >
-                  <span className="checkmark">{selected ? "✓" : ""}</span>
-                  <strong>{category}</strong>
-                  <span>{count}개</span>
-                </button>
-              );
-            })}
-          </div>
-          <p className="helper-text">선택한 문제 수: {maxQuestionCount}개</p>
-          <button
-            className="primary-button"
-            disabled={selectedCategories.length === 0}
-            type="button"
-            onClick={() => setSetupStep(2)}
-          >
-            다음
-          </button>
-        </section>
-      );
-    }
-
-    if (setupStep === 2) {
-      return (
-        <section className="card setup-card">
-          <div className="step-header">
-            <p className="eyebrow">2 / 4</p>
-            <h2>퀴즈 방식 선택</h2>
-          </div>
-          <div className="option-grid">
-            {METHOD_OPTIONS.map((option) => (
-              <button
-                className={method === option.id ? "option-button selected" : "option-button"}
-                key={option.id}
-                type="button"
-                onClick={() => setMethod(option.id)}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-          <div className="setup-actions">
-            <button className="secondary-button" type="button" onClick={() => setSetupStep(1)}>
-              이전
-            </button>
-            <button className="primary-button" type="button" onClick={() => setSetupStep(3)}>
-              다음
-            </button>
-          </div>
-        </section>
-      );
-    }
-
-    if (setupStep === 3) {
-      return (
-        <section className="card setup-card">
-          <div className="step-header">
-            <p className="eyebrow">3 / 4</p>
-            <h2>문제 방향 선택</h2>
-          </div>
-          <div className="direction-list">
-            {DIRECTION_OPTIONS.map((option) => (
-              <div className={direction === option.id ? "direction-card selected" : "direction-card"} key={option.id}>
-                <button className="direction-main" type="button" onClick={() => setDirection(option.id)}>
-                  <span>{option.label}</span>
-                </button>
-                <button
-                  className="info-button"
-                  type="button"
-                  aria-label={`${option.label} 설명`}
-                  onClick={() => setOpenHelp((value) => (value === option.id ? "" : option.id))}
-                >
-                  i
-                </button>
-                {openHelp === option.id && <p className="help-panel">{option.help}</p>}
-              </div>
-            ))}
-          </div>
-          <div className="setup-actions">
-            <button className="secondary-button" type="button" onClick={() => setSetupStep(2)}>
-              이전
-            </button>
-            <button className="primary-button" type="button" onClick={() => setSetupStep(4)}>
-              다음
-            </button>
-          </div>
-        </section>
-      );
-    }
-
+  function renderCategoryStep() {
     return (
       <section className="card setup-card">
         <div className="step-header">
-          <p className="eyebrow">4 / 4</p>
+          <p className="eyebrow">1 / {totalSetupSteps}</p>
+          <h2>카테고리 선택</h2>
+        </div>
+        <div className="utility-row">
+          <button className="secondary-button compact-button" type="button" onClick={() => setSelectedCategories(CATEGORIES)}>
+            전체 선택
+          </button>
+          <button className="secondary-button compact-button" type="button" onClick={() => setSelectedCategories([])}>
+            전체 해제
+          </button>
+        </div>
+        <div className="category-grid">
+          {CATEGORIES.map((category) => {
+            const selected = selectedCategories.includes(category);
+            const count = airportCategories.find((group) => group.category === category)?.items.length ?? 0;
+
+            return (
+              <button
+                className={selected ? "category-card selected" : "category-card"}
+                key={category}
+                type="button"
+                onClick={() => toggleCategory(category)}
+                aria-pressed={selected}
+              >
+                <span className="checkmark">{selected ? "✓" : ""}</span>
+                <strong>{category}</strong>
+                <span>{count}개</span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="helper-text">선택한 문제 수: {maxQuestionCount}개</p>
+        <button
+          className="primary-button"
+          disabled={selectedCategories.length === 0}
+          type="button"
+          onClick={() => setSetupStep(2)}
+        >
+          다음
+        </button>
+      </section>
+    );
+  }
+
+  function renderMethodStep() {
+    return (
+      <section className="card setup-card">
+        <div className="step-header">
+          <p className="eyebrow">2 / {totalSetupSteps}</p>
+          <h2>퀴즈 방식 선택</h2>
+        </div>
+        <div className="option-grid">
+          {METHOD_OPTIONS.map((option) => (
+            <button
+              className={method === option.id ? "option-button selected" : "option-button"}
+              key={option.id}
+              type="button"
+              onClick={() => setMethod(option.id)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <div className="setup-actions">
+          <button className="secondary-button" type="button" onClick={() => setSetupStep(1)}>
+            이전
+          </button>
+          <button className="primary-button" type="button" onClick={() => setSetupStep(3)}>
+            다음
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  function renderChoiceCountStep() {
+    return (
+      <section className="card setup-card">
+        <div className="step-header">
+          <p className="eyebrow">3 / {totalSetupSteps}</p>
+          <h2>보기 개수 선택</h2>
+        </div>
+        <div className="choice-count-grid" role="group" aria-label="객관식 보기 개수">
+          {CHOICE_COUNT_OPTIONS.map((count) => (
+            <button
+              className={choiceCount === count ? "choice-count-button selected" : "choice-count-button"}
+              key={count}
+              type="button"
+              onClick={() => setChoiceCount(count)}
+            >
+              {count}개
+            </button>
+          ))}
+        </div>
+        <p className="helper-text">객관식 보기 수는 4개부터 10개까지 설정할 수 있습니다. 기본값은 7개입니다.</p>
+        <div className="setup-actions">
+          <button className="secondary-button" type="button" onClick={() => setSetupStep(2)}>
+            이전
+          </button>
+          <button className="primary-button" type="button" onClick={() => setSetupStep(4)}>
+            다음
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  function renderDirectionStep() {
+    return (
+      <section className="card setup-card">
+        <div className="step-header">
+          <p className="eyebrow">{directionStep} / {totalSetupSteps}</p>
+          <h2>문제 방향 선택</h2>
+        </div>
+        <div className="direction-list">
+          {DIRECTION_OPTIONS.map((option) => (
+            <div className={direction === option.id ? "direction-card selected" : "direction-card"} key={option.id}>
+              <button className="direction-main" type="button" onClick={() => setDirection(option.id)}>
+                <span>{option.label}</span>
+              </button>
+              <button
+                className="info-button"
+                type="button"
+                aria-label={`${option.label} 설명`}
+                onClick={() => setOpenHelp((value) => (value === option.id ? "" : option.id))}
+              >
+                i
+              </button>
+              {openHelp === option.id && <p className="help-panel">{option.help}</p>}
+            </div>
+          ))}
+        </div>
+        <div className="setup-actions">
+          <button className="secondary-button" type="button" onClick={() => setSetupStep(method === "choice" ? 3 : 2)}>
+            이전
+          </button>
+          <button className="primary-button" type="button" onClick={() => setSetupStep(countStep)}>
+            다음
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  function renderQuestionCountStep() {
+    return (
+      <section className="card setup-card">
+        <div className="step-header">
+          <p className="eyebrow">{countStep} / {totalSetupSteps}</p>
           <h2>문제 수 선택</h2>
         </div>
         <div className="count-control">
@@ -397,7 +435,7 @@ function App() {
           <p className="helper-text">최대 {maxQuestionCount}문제</p>
         </div>
         <div className="setup-actions">
-          <button className="secondary-button" type="button" onClick={() => setSetupStep(3)}>
+          <button className="secondary-button" type="button" onClick={() => setSetupStep(directionStep)}>
             이전
           </button>
           <button className="primary-button" type="button" onClick={startQuiz}>
@@ -406,6 +444,26 @@ function App() {
         </div>
       </section>
     );
+  }
+
+  function renderSetupStep() {
+    if (setupStep === 1) {
+      return renderCategoryStep();
+    }
+
+    if (setupStep === 2) {
+      return renderMethodStep();
+    }
+
+    if (setupStep === 3 && method === "choice") {
+      return renderChoiceCountStep();
+    }
+
+    if (setupStep === directionStep) {
+      return renderDirectionStep();
+    }
+
+    return renderQuestionCountStep();
   }
 
   return (
@@ -435,7 +493,10 @@ function App() {
           </div>
           <div className="summary-box">
             <span>{quiz.categorySummary}</span>
-            <span>{quiz.methodLabel} · {quiz.directionLabel}</span>
+            <span>
+              {quiz.methodLabel} · {quiz.directionLabel}
+              {quiz.method === "choice" ? ` · 보기 ${quiz.choiceCount}개` : ""}
+            </span>
           </div>
 
           <div className="prompt-area">
